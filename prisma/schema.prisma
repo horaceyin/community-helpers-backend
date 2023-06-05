@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+generator nestgraphql {
+    provider = "node node_modules/prisma-nestjs-graphql"
+    output = "../src/@generated"
+    fields_Validator_from = "class-validator"
+    fields_Validator_imput = true
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement()) 
+  username String  @unique
+  password String
+  displayName String?
+  email String?
+  address  String? //TODO: Break it down
+  district String?
+  occupation String?
+  city String?
+  gender String?
+  country String?
+  phone String?
+  dateOfBirth DateTime? @db.Date
+  avatar String?
+  userScore Int? @default(0)
+  helperCount Int? @default(0)
+  interests Interest[]
+  helpRequestMatchings HelpRequestMatching[]
+  userCreatedHelpRequests HelpRequest[]
+  userHelpRequestActions UserHelpRequestAction[]
+  takenHelpRequests TakenHelpRequest[]
+  recommendedHelpRequestCaches RecommendedHelpRequestCache[]
+  userPushToken UserPushToken[]
+}
+
+model HelpRequest {
+  id Int @id @default(autoincrement())
+  title String
+  category String
+  description String
+  district String?
+  helperRating Float?
+  price Float?
+  is_taken Boolean? @default(false)
+  address String?
+  helpRequestMatchings HelpRequestMatching[]
+  helpSeeker User? @relation(fields: [helpSeekerId], references: [id])
+  helpSeekerId Int?
+  creationDatetime DateTime @default(now())
+  helpRequestDatetime DateTime
+  userHelpRequestActions UserHelpRequestAction[]
+  takenHelpRequests TakenHelpRequest[]
+  recommendedHelpRequestCaches RecommendedHelpRequestCache[]
+  images String[]
+  helpRequestCategories HelpRequestCategory[]
+}
+
+model HelpRequestMatching {
+  id Int @id @default(autoincrement())
+  character String
+  priority Int
+  state String
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  helpRequest HelpRequest @relation(fields: [helpRequestId], references: [id])
+  helpRequestId Int
+}
+
+model RecommendedHelpRequestCache {
+  id Int @id @default(autoincrement())
+  modelVersion String
+  recommendationOrder Int
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  helpRequest HelpRequest @relation(fields: [helpRequestId], references: [id])
+  helpRequestId Int
+}
+
+model TakenHelpRequest{
+  @@id([userId, helpRequestId])
+  state String @default("pending")
+  is_taken Boolean @default(false)
+  userId Int
+  user User @relation(fields:[userId], references: [id])
+  helpRequestId Int
+  helpRequest HelpRequest @relation(fields: [helpRequestId], references: [id])
+}
+
+model UserHelpRequestAction {
+  id Int @id @default(autoincrement())
+  userId Int
+  users User @relation(fields:[userId], references: [id])
+  helpRequestId Int
+  helpRequests HelpRequest @relation(fields: [helpRequestId], references: [id])
+  actionType String?
+  actionDatetime DateTime @default(now())
+}
+
+model UserPushToken{
+  userId Int
+  user User @relation(fields:[userId], references: [id])
+  expoPushToken String
+  @@id([userId, expoPushToken])
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  name String
+  is_userCreated Boolean @default(false)
+  interests Interest[]
+  helpRequestCategories HelpRequestCategory[]
+}
+
+model Interest{
+  userId Int
+  user User @relation(fields:[userId], references: [id])
+  categoryId Int
+  category Category @relation(fields: [categoryId], references: [id])
+  @@id([userId, categoryId])
+}
+
+model HelpRequestCategory{
+  helpRequestId Int
+  helpRequests HelpRequest @relation(fields: [helpRequestId], references: [id])
+  categoryId Int
+  category Category @relation(fields: [categoryId], references: [id])
+  @@id([helpRequestId, categoryId])
+}

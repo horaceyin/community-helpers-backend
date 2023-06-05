@@ -1,0 +1,6 @@
+node_modules
+dist
+.env
+src/schema.gql
+src/@generated
+.DS_Store
